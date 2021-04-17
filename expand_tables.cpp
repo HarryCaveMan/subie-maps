@@ -1,5 +1,6 @@
 #include <iostream>     /* cout */
 #include <fstream>      /* ifstream */
+#include <stdio.h>      /* strtol */
 #include "rapidxml-1.13/rapidxml.hpp" /* namespace rapidxml */
 #include "rapidxml-1.13/rapidxml_utils.hpp" /* rapidxml::file */
 
@@ -41,7 +42,7 @@ const static char* get_bytes_vector(ifstream& fs,long& length) {
 const static void stream_bytes(ifstream& fs,long& length, const void (*callback)(const char& byte)) {
   for (long i=0 ; i<length ; i++) {    
     const char byte = fs.seekg(i,fs.beg).get();
-    //worked like a charm first try
+    //function pointer worked like a charm first try
     callback(byte);
   }
 }
@@ -60,17 +61,21 @@ int main(int argc, char **argv) {
   dom.parse<0>(xml_file.data());  
   static xml_node<> * ecu_definition(dom.first_node("rom"));
   const static xml_node<> * definition_metadata(ecu_definition->first_node("romid"));
-  for (xml_node<> * metadata_node = definition_metadata->first_node(); metadata_node; metadata_node = metadata_node->next_sibling())
+  for (xml_node<> * metadata_node=definition_metadata->first_node() ; metadata_node ; metadata_node=metadata_node->next_sibling())
 	{
     cout << metadata_node->name() << ": " << metadata_node->value() << endl;
+  }
+  for(xml_node<> * table_node = ecu_definition->first_node("table") ; table_node ; table_node=table_node->next_sibling()) {
+      cout << table_node->first_attribute("name")->value() << endl;
+      cout << strtol(table_node->first_attribute("storageaddress")->value(),NULL,16) << endl;
   }
   //mutating needlessly makes me sad
   hex_fs.exceptions(ifstream::failbit | ifstream::badbit);
   //const static char* bytes;
   static long length;
   try {
-    length = 100; //get_file_size(hex_fs);
-    stream_bytes(hex_fs,length,print_formatted_hex_string);
+    length = get_file_size(hex_fs);
+    //stream_bytes(hex_fs,length,print_formatted_hex_string);
   }
   // catch fs error and print message but then bubble up anyway
   catch (ifstream::failure& fs_ex) {
