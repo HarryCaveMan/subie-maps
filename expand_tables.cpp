@@ -69,7 +69,8 @@ int main(int argc, char **argv) {
   //const static char* bytes;
   static long length;
   try {
-    length = get_file_size(hex_fs);
+    length = 100; //get_file_size(hex_fs);
+    stream_bytes(hex_fs,length,print_formatted_hex_string);
   }
   // catch fs error and print message but then bubble up anyway
   catch (ifstream::failure& fs_ex) {
